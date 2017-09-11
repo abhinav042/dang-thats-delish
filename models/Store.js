@@ -44,10 +44,17 @@ storeSchema.pre('save', async function(next) {
 	// find other stores with the same slug and rename them
 	const slugRegEx = new RegExp(`^(${this.slug})((-[0-9]*$)?)$`, "i");
 	const storesWithSlug = await this.constructor.find({slug: slugRegEx});
-	if(storeWithSlug.length) {
-		this.slug = `${this.slug}-${storeWithSlug.length + 1}`;
+	if(storesWithSlug.length) {
+		this.slug = `${this.slug}-${storesWithSlug.length + 1}`;
 	}
 	next();
 });
+
+storeSchema.statics.getTagsList = function () {
+	return this.aggregate([
+		{ $unwind: "$tags" },
+		{ $group: {_id: "$tags", count: {$sum: 1} } }
+	]);
+};
 
 module.exports = mongoose.model('Store', storeSchema);
