@@ -26,6 +26,7 @@ exports.addStore = (req, res) => {
 };
 
 exports.createStore = async (req, res) => {
+	req.body.author = req.user._id;
 	const store = await(new Store(req.body).save());
 	req.flash("success", `Store created ${store.name}`);
 	res.redirect(`/store/${store.slug}`);
@@ -37,11 +38,19 @@ exports.getStores = async (req, res) => {
 	res.render("stores", {title: "Stores", stores}); 
 };
 
+const confirmOwner = (store, user, req, res) => {
+	if(!store.author.equals(user._id)) {
+		req.flash("error", "You need to own the store to edit it!");
+		res.redirect("back");
+		return;
+	}
+};
+
 exports.editStore = async (req, res) => {
 	// 1. find the store given the id
 	const store = await Store.findOne({ _id: req.params.id });
-	// 2. confirm owner
-
+	// 2. confirm owner (prevent them from editing the store if they arent the owner)
+	confirmOwner(store, req.user, req, res);
 	// 3. render out the editStore form
 	res.render("editStore", {title: `edit ${store.name}`, store});
 };
@@ -50,8 +59,10 @@ exports.upload = multer(multerOptions).single("photo");
 
 exports.resize = async (req, res, next) => {
 	// check if there is a file
-	if (!req.file)
+	if (!req.file) {
 		next();
+		return;
+	}
 	// getting the extension and renaming to a unique id
 	const extension = req.file.mimetype.split("/")[1];
 	req.body.photo = `${uuid.v4()}.${extension}`;
@@ -60,7 +71,7 @@ exports.resize = async (req, res, next) => {
 	await photo.resize(800, jimp.AUTO);
 	await photo.write(`./public/uploads/${req.body.photo}`);
 	next();
-}
+};
 
 exports.updateStore = async (req, res) => {
 	// set the type of data to be a Point
@@ -75,10 +86,10 @@ exports.updateStore = async (req, res) => {
 	req.flash("success", `Successfully updated ${store.name}!! <a href="/stores/${store.slug}""> View Store!!</a>`);
 	// redirect to the store 
 	res.redirect(`/stores/${store._id}/edit`);
-}
+};
 
 exports.getStoreBySlug = async (req, res, next) => {
-	const store = await Store.findOne({ slug: req.params.slug });
+	const store = await Store.findOne({ slug: req.params.slug }).populate("author");
 	if (!store)
 		return next(); 
 	res.render("store", {store, title: store.name});
@@ -91,5 +102,49 @@ exports.getStoresByTag = async (req, res) => {
 	const storesPromise = Store.find({tags: tagQuery});
 	const [tags, stores] = await Promise.all([tagsPromise, storesPromise]);
 	res.render("tags", {tagId, tags, title: "Tags", stores} );
+};
+
+exports.mapPage = (req, res) => {
+	res.render("map", { title: "Map"});
 }
 
+/*
+
+	APIs
+
+*/
+
+exports.searchStores = async (req, res) => {
+	const stores = await Store
+	// find the stores which meet the search reqs
+	.find({
+		$text: { $search: req.query.q }
+	}, {
+		score: { $meta: "textScore" }
+	})
+	// sort them according to the score (the number of times the word appeared)
+	.sort({
+		score: { $meta: "textScore" }
+	})
+	// limit the search result to 5 stores
+	.limit(5);
+	res.json(stores);
+};
+
+exports.mapStores = async (req, res) => {
+	const coordinates = [req.query.lng, req.query.lat].map(parseFloat);
+	const q = {
+		location: {
+			$near: {
+				$geometry: {
+					type: "Point",
+					coordinates
+				},
+				$maxDistance: 10000 // 10km -> 6.2miles
+			}
+		}
+	};
+
+	const stores = await Store.find(q).select("slug location description name photo").limit(10);
+	res.json(stores);
+}
