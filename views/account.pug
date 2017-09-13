@@ -1,0 +1,11 @@
+extends layout
+
+block content
+	.inner
+		h3 #{user.name ? `Edit Your Account, ${user.name}!` : "how'd you get here"}
+		form(action="/account" method="POST")
+			label(for="name") Name
+			input(type="text" name="name" value=user.name)
+			label(for="email") Email
+			input(type="text" name="email" value=user.email)
+			input.button(type="submit" value="Update my account")
