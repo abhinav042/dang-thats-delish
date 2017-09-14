@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const Store = mongoose.model('Store');
+const User = mongoose.model("User"); 
+const Review = mongoose.model("Review"); 
 const multer = require("multer");
 const jimp = require("jimp");
 const uuid = require("uuid"); // unique id for every image uploaded
-
 // for image upload format validation 
 const multerOptions = {
 	storage: multer.memoryStorage(),
@@ -33,8 +34,14 @@ exports.createStore = async (req, res) => {
 };
 
 exports.getStores = async (req, res) => {
+	const page = req.params.page || 1;
+	const limit = 4;
+	const skip = (page * limit) - limit;
 	// query the db for a list of all stores
-	const stores = await Store.find();
+	const stores = await Store
+		.find()
+		.skip(skip)
+		.limit(limit);
 	res.render("stores", {title: "Stores", stores}); 
 };
 
@@ -89,7 +96,7 @@ exports.updateStore = async (req, res) => {
 };
 
 exports.getStoreBySlug = async (req, res, next) => {
-	const store = await Store.findOne({ slug: req.params.slug }).populate("author");
+	const store = await Store.findOne({ slug: req.params.slug }).populate("author reviews");
 	if (!store)
 		return next(); 
 	res.render("store", {store, title: store.name});
@@ -106,6 +113,17 @@ exports.getStoresByTag = async (req, res) => {
 
 exports.mapPage = (req, res) => {
 	res.render("map", { title: "Map"});
+};
+
+exports.heartedStores = async (req, res) => {
+	const userDetails = await User.findOne({hearts: req.user.hearts}).populate("hearts");
+	const stores = userDetails.hearts;
+	res.render("stores", {title: "Hearted Stores", stores});
+};
+
+exports.getTopStores = async (req, res) => {
+	const stores = await Store.getTopStores();
+	res.render("topStores", {stores, title:"⭐ TOP STORES~"});
 }
 
 /*
@@ -147,4 +165,18 @@ exports.mapStores = async (req, res) => {
 
 	const stores = await Store.find(q).select("slug location description name photo").limit(10);
 	res.json(stores);
-}
+};
+
+exports.heartStore = async (req, res) => {
+	const hearts = req.user.hearts.map(obj => obj.toString());
+	const operator = hearts.includes(req.params.id) ? "$pull" : "$addToSet";
+	const user = await User
+	.findByIdAndUpdate(req.user._id, 
+		{ [operator]: { hearts: req.params.id} },
+		{ new: true }
+	)
+	res.json(user);
+};
+ 
+
+
