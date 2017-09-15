@@ -1,14 +1,17 @@
 {
-  "name": "dang-thats-delicious",
-  "version": "0.0.0",
+  "name": "dang-thats-delishh",
+  "version": "0.0.1",
   "private": true,
   "engines": {
     "node": ">= 7.6.0"
   },
+  "now": {
+    "dotenv": "variables.env.now"
+  },
   "scripts": {
-    "prod": "node ./start.js",
+    "start": "node ./start.js",
     "watch": "nodemon ./start.js --ignore public/",
-    "start": "concurrently \"npm run watch\" \"npm run assets\" --names \"💻,📦\" --prefix name",
+    "dev": "concurrently \"npm run watch\" \"npm run assets\" --names \"💻,📦\" --prefix name",
     "assets": "webpack -w --display-max-modules 0",
     "sample": "node ./data/load-sample-data.js",
     "blowitallaway": "node ./data/load-sample-data.js --delete",
