@@ -8,7 +8,7 @@ I used node.js for the backend, mongoDB as the database and pug for templating.
 
 ## Some of the challenges I faced
 
-Even though the tutorials were hella helpful and direct, I tried implementing most of the backend tid-bits myself. I particularly faced a challenge implementing the password-reset flow which got pretty hairy at certain times but turned out to be kinda straightforward after I got the hang of it. Also, monogoDB relations took some time to wrap my head around but after a some head-scratching and going through the docs it cleared up and I got the hang of it. 
+Even though the tutorials were hella helpful and direct, I tried implementing most of the backend tid-bits myself. I particularly faced a challenge implementing the password-reset flow which got pretty hairy at certain times but turned out to be kinda straightforward after I got the hang of it. Also, monogoDB relations took some time to wrap my head around but after some head-scratching and going through the docs, it cleared up and I got the hang of it. 
 
 ## Things I learnt
 
