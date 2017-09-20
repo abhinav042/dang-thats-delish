@@ -1,6 +1,6 @@
 ## What is this?
 
-A full-stack personal project "DANG! That's Delishh" made using @wesbos tutorials.
+A full-stack personal project "DANG! That's Delishh" made using @wes tutorials.
 
 ## What did I use to make it
 
